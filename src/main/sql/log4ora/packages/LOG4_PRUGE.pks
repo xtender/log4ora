@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE LOG4ORA.log4 AS
+CREATE OR REPLACE PACKAGE LOG4ORA.log4_pruge AS
 /************************************************************************
     Log4ora - Logging package for Oracle 
     Copyright (C) 2009  John Thompson
@@ -17,11 +17,9 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4 AS
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ************************************************************************/
+-- TO DO create purge package for log table
+    FUNCTION stubb RETURN varchar2;
 
-   -- TODO's
-     -- add procs for all message levels.
 
-    PROCEDURE debug(pMsg IN VARCHAR2);
-
-END log4;
+END log4_purge;
 /

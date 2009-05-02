@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE LOG4ORA.log4 AS
+CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_purge AS
 /************************************************************************
     Log4ora - Logging package for Oracle 
     Copyright (C) 2009  John Thompson
@@ -18,10 +18,14 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4 AS
 
 ************************************************************************/
 
-   -- TODO's
-     -- add procs for all message levels.
 
-    PROCEDURE debug(pMsg IN VARCHAR2);
 
-END log4;
-/
+FUNCTION stubb RETURN varchar2 IS
+BEGIN
+ 
+   
+   RETURN 'foo';
+ 
+END;
+
+END log4_purge;

@@ -19,30 +19,31 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
 ************************************************************************/
 
 
-
-    -- based on ask tom utility... 
-    PROCEDURE who_called_me (owner      OUT VARCHAR2,
-                             name       OUT VARCHAR2,
-                             lineno     OUT NUMBER,
-                             caller_t   OUT VARCHAR2)
+    --  roughly based on an 'ask tom' utility... 
+    PROCEDURE get_calling_module (pOwner      OUT VARCHAR2,
+                             pModule_name       OUT VARCHAR2,
+                             pLineno     OUT NUMBER)
     IS
-       call_stack    VARCHAR2 (4096) DEFAULT DBMS_UTILITY.format_call_stack ;
+       vCall_stack    VARCHAR2(2000) DEFAULT DBMS_UTILITY.format_call_stack ;
        n             NUMBER;
-       found_stack   BOOLEAN DEFAULT FALSE ;
-       line          VARCHAR2 (255);
-       cnt           NUMBER := 0;
+       found_stack   BOOLEAN DEFAULT FALSE;
+       line        varchar2(255);
+       cnt         number := 0;
        vTokens       dbms_sql.varchar2s;
        vModule       VARCHAR2(100);
        vModule_Type   VARCHAR2(100);
+       vProcedure_name VARCHAR2(30);
+       vDbLink        VARCHAR(30);
+       vNextPos      BINARY_INTEGER;
        
     BEGIN
        --
        LOOP
-          n := INSTR (call_stack, CHR (10));
-          EXIT WHEN (cnt = 3 OR n IS NULL OR n = 0);
+          n := INSTR (vCall_stack, CHR (10));
+          EXIT WHEN (cnt = 4 OR n IS NULL OR n = 0);
           --
-          line := SUBSTR (call_stack, 1, n - 1);
-          call_stack := SUBSTR (call_stack, n + 1);
+          line := SUBSTR (vCall_stack, 1, n - 1);
+          vCall_stack := SUBSTR (vCall_stack, n + 1);
 
           --
           IF (NOT found_stack)
@@ -63,9 +64,6 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
               
                 vTokens := tokenizer(line, ' ');
              
-                lineno := TO_NUMBER (vTokens(2));
-                line := SUBSTR (line, 21);
-
                 /* 
                 *  The DBMS_UTILITY.format_call_stack function 
                 *  Returns a string something like this:  
@@ -76,7 +74,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                 * 0x9f4ff770       143  package body LOG4ORA.LOG4_CORE
                 */
  
-
+                -- module name will shift due to word count of type
                 IF vTokens.last = 5 THEN
                      vModule_type := vTokens(3) || ' ' || vTokens(4); 
                      vModule := vTokens(5);
@@ -85,54 +83,24 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                     vModule := vTokens(5);
                 END IF;    
                 
-                --dbms_output.put_line('vModule = ' || vModule);
-                --dbms_output.put_line('vModule_type = ' || vModule_type);
+                pLineno := vTokens(2);
                 
-                
-                IF (vModule LIKE 'pr%')
-                THEN
-                   n := LENGTH ('procedure ');
-                ELSIF (vModule LIKE 'fun%')
-                THEN
-                   n := LENGTH ('function ');
-                ELSIF (vModule LIKE 'package body%')
-                THEN
-                   n := LENGTH ('package body ');
-                ELSIF (vModule LIKE 'pack%')
-                THEN
-                   n := LENGTH ('package ');
-                ELSIF (vModule LIKE 'anonymous%')
-                THEN
-                   n := LENGTH ('anonymous block ');
-                ELSE
-                   n := NULL;
-                END IF;
-
-                IF (n IS NOT NULL)
-                THEN
-                   caller_t := LTRIM (RTRIM (UPPER (SUBSTR (line, 1, n - 1))));
-                ELSE
-                   caller_t := 'TRIGGER';
-                END IF;
-
-                line := SUBSTR (line, NVL (n, 1));
-                n := INSTR (line, '.');
-                owner := LTRIM (RTRIM (SUBSTR (line, 1, n - 1)));
-                name := vModule;
+                -- util to parse name string returned
+                dbms_utility.name_tokenize(vModule, pOwner, pModule_name, vProcedure_name, vDBLink, vNextPos );
              END IF;
           END IF;
        END LOOP;
-    END;
+    END get_calling_module;
 
 
-    FUNCTION Tokenizer (p_string VARCHAR2, p_separators in VARCHAR2)
+    FUNCTION Tokenizer (p_string IN VARCHAR2, p_separators in VARCHAR2)
     RETURN dbms_sql.varchar2s IS
         l_token_tbl dbms_sql.varchar2s;
         pattern varchar2(250);
         BEGIN
 
         pattern := '[^(' || p_separators || ')]+' ;
-
+          
             SELECT   REGEXP_SUBSTR (p_string, pattern, 1, LEVEL) token
               BULK   COLLECT
               INTO   l_token_tbl
@@ -144,27 +112,140 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     END Tokenizer;
 
 
+
+  /**
+  *  Function to determine if log level is enabled for module
+  *
+  */
+  FUNCTION is_log_level_enabled(pOwner IN VARCHAR2, pModule_name IN VARCHAR2, pLevel IN VARCHAR2) RETURN boolean IS
+  BEGIN
+  
+    -- look up log level 
+    RETURN TRUE;
+  END is_log_level_enabled;  
+  
+
+  /**
+  *  This function gathers session information, and builds the XML message
+  *  which will be placed on the queue.
+  *
+  */
+  FUNCTION build_log_message (pLevel IN VARCHAR2, pMsg IN VARCHAR2) RETURN VARCHAR2 IS
+  
+   vClient_IP VARCHAR(20);
+  BEGIN 
     
-  PROCEDURE debug(pMsg IN VARCHAR2) IS
-    vOwner varchar2(30);
-    vName VARCHAR2(30);
-    vLineNo NUMBER;
-    vCaller_t VARCHAR2(30);
+    -- TODOs
+    -- get session info
+    -- build xml
+    -- maybe this should return an xmltype??
+    
+    -- for testing of gloabals package
+    vClient_IP := log4_globals.get_client_ip;
+    
+    RETURN pMsg;
+  END build_log_message;  
+
+
+  /**
+  * Procedure to insert log message to AQ Queue.
+  *
+  */ 
+  PROCEDURE queue_message(pLevel IN VARCHAR2, pMessage IN VARCHAR2) IS
+  BEGIN
+  
+    -- insert into AQ here
+    null;
+  END queue_message;
+  
+
+  /**
+  * Severe errors that cause premature termination.
+  *
+  */  
+  PROCEDURE fatal(pMsg IN VARCHAR2) IS
   
   BEGIN
-    dbms_output.put_line(pMsg);
-    --dbms_output.put_line('');
-    --dbms_output.put_line(DBMS_UTILITY.FORMAT_CALL_STACK);
-    
-    who_called_me(vOwner, vName, vLineNo, vCaller_t);
-    
-    dbms_output.put_line('vOwner=' || vOwner);
-    dbms_output.put_line(vName);
-    dbms_output.put_line(vLineNo);
-    dbms_output.put_line(vCaller_t);
-    
-    
-  END;  
+    null;
+  END fatal;
 
+
+  /**
+  * Other runtime errors or unexpected conditions.
+  *
+  */  
+  PROCEDURE error(pMsg IN VARCHAR2) IS
+  
+  BEGIN
+    null;
+  END error;
+  
+  
+  /**
+  * Use of deprecated APIs, poor use of API, 'almost' errors, other runtime situations 
+  * that are undesirable or unexpected, but not necessarily "wrong".
+  *
+  */
+  PROCEDURE warn(pMsg IN VARCHAR2) IS
+  
+  BEGIN
+    null;
+  END warn;
+  
+  
+  /**
+  * Interesting runtime events (startup/shutdown).
+  *
+  */
+  PROCEDURE info(pMsg IN VARCHAR2) IS
+  
+  BEGIN
+    null;
+  END info;
+
+
+  /**
+  * Detailed information on the flow through the system.
+  *
+  */  
+  PROCEDURE debug(pMsg IN VARCHAR2) IS
+  
+  BEGIN
+    log_message('DEBUG', pMsg);
+  END debug;
+
+
+
+  /**
+  * More detailed information than debug.
+  *
+  */
+  PROCEDURE trace(pMsg IN VARCHAR2) IS
+  
+  BEGIN
+    null;
+  END trace;
+
+
+  /**
+  * Common logging procedure.  This procedure is used by the various
+  * 'log level' procedures.
+  *
+  */  
+  PROCEDURE log_message(pLevel IN VARCHAR2, pMsg IN VARCHAR2) IS
+    vOwner VARCHAR2(30);
+    vModule VARCHAR2(30);
+    vLineNo NUMBER;
+    
+  BEGIN
+    
+    get_calling_module(vOwner, vModule, vLineNo);
+
+    
+    IF is_log_level_enabled(vOwner, vModule, pLevel) THEN        
+        queue_message(pLevel, build_log_message(pLevel, pMsg));
+    END IF;
+    
+  END log_message;
 END log4_core;
 /
