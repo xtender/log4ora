@@ -2,12 +2,11 @@
 
 = Overview =
 
-Add your content here.
+http://log4ora.googlecode.com/svn/trunk/doc/log4ora_overview.png
+== Application layer ==
+The application layer represents some type of PL/SQL module.  This can be a procedure, function, package, or trigger. This is the body of code which is implementing the logging.
 
+== Log4Ora Interface == 
+Log4Ora provides an API interface layer.  The API layer is used to call the various logging modules, and to provide exception handling.  Ideally, exceptions thrown in logging will not propagate to the application layer.
 
-= Details =
-
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+== Log4Ora Core == 
