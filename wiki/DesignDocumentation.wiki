@@ -1,5 +1,5 @@
 #summary Design Documentation for Log4Ora
-
+#sidebar TableOfContents
 = Overview =
 
 http://log4ora.googlecode.com/svn/trunk/doc/log4ora_overview.png
