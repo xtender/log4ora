@@ -1,0 +1,29 @@
+#summary Log4Ora User Guide
+
+----
+= DRAFT =
+----
+
+= Introduction =
+
+!Log4Ora is based on the popular <a href="http://en.wikipedia.org/wiki/Log4J" target="new">Log4j</a> Java logging framework.  It supports the same logging levels as Log4j and is designed to be light weight and easy to use.
+
+New and advanced features in Oracle 11g are utilized to make !Log4Ora light weight, versatile, and enterprise ready.
+
+= Usage = 
+== Log Levels ==
+ describe log levels here...
+
+
+== Logging Messages ==
+describe API here... 
+
+== Configuration ==
+describe setup here...
+
+= Viewing Log Messages = 
+== DBMS_OUTPUT ==
+
+== Log Table ==
+
+== Log4j Output ==
