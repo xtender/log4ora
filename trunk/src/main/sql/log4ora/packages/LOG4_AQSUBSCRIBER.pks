@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE LOG4ORA.log4_AQSUBSCRIBTER AS
+CREATE OR REPLACE PACKAGE LOG4ORA.log4_aqsubscriber AS
 /************************************************************************
     Log4ora - Logging package for Oracle 
     Copyright (C) 2009  John Thompson
@@ -17,6 +17,10 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4_AQSUBSCRIBTER AS
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ************************************************************************/
+
+-- TO DO
+ -- package stub for aq subscriber.  This guy will read from queue
+ -- and insert into log table
 
     FUNCTION stubb RETURN varchar2;
 

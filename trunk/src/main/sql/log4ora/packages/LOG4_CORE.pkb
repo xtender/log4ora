@@ -37,15 +37,14 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
        vNextPos      BINARY_INTEGER;
        
     BEGIN
-       --
+       
        LOOP
           n := INSTR (vCall_stack, CHR (10));
-          EXIT WHEN (cnt = 4 OR n IS NULL OR n = 0);
-          --
+          EXIT WHEN (cnt = 50 OR n IS NULL OR n = 0);
+          
           line := SUBSTR (vCall_stack, 1, n - 1);
           vCall_stack := SUBSTR (vCall_stack, n + 1);
 
-          --
           IF (NOT found_stack)
           THEN
              IF (line LIKE '%handle%number%name%')
@@ -53,43 +52,45 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                 found_stack := TRUE;
              END IF;
           ELSE
-             cnt := cnt + 1;
-
-             -- cnt = 1 is Header Row
-             -- cnt = 2 is This package (logging core)
-             -- cnt = 3 is Interface to logging package
-             -- cnt = 4 is Their Caller
-             IF (cnt = 4)
-             THEN
+            cnt := cnt + 1;
               
-                vTokens := tokenizer(line, ' ');
+            vTokens := tokenizer(line, ' ');
              
-                /* 
-                *  The DBMS_UTILITY.format_call_stack function 
-                *  Returns a string something like this:  
-                *
-                *  ----- PL/SQL Call Stack -----
-                *    object      line  object
-                *    handle    number  name
-                * 0x9f4ff770       143  package body LOG4ORA.LOG4_CORE
-                */
+            /* 
+            *  The DBMS_UTILITY.format_call_stack function 
+            *  Returns a string something like this:  
+            *
+            * ----- PL/SQL Call Stack -----
+            *  object      line  object
+            *handle    number  name
+            *0x9f4ff770        27  package body LOG4ORA.LOG4_CORE
+            *0x9f4ff770       243  package body LOG4ORA.LOG4_CORE
+            *0x9f4ff770       215  package body LOG4ORA.LOG4_CORE
+            *0x94df0178        23  package body LOG4ORA.LOG4
+            *0xa7950748         5  package body JT.PACKAGE_A
+            */
  
-                -- module name will shift due to word count of type
-                IF vTokens.last = 5 THEN
-                     vModule_type := vTokens(3) || ' ' || vTokens(4); 
-                     vModule := vTokens(5);
-                ELSE
-                    vModule_type := vTokens(3);
-                    vModule := vTokens(5);
-                END IF;    
+            -- module name will shift due to word count of type
+            IF vTokens.last = 5 THEN
+                 --vModule_type := vTokens(3) || ' ' || vTokens(4); 
+                 vModule := vTokens(5);
+            ELSE
+                --vModule_type := vTokens(3);
+                vModule := vTokens(4);
+            END IF;    
                 
-                pLineno := vTokens(2);
-                
-                -- util to parse name string returned
-                dbms_utility.name_tokenize(vModule, pOwner, pModule_name, vProcedure_name, vDBLink, vNextPos );
-             END IF;
+            IF vModule != 'LOG4ORA.LOG4_CORE' and vModule != 'LOG4ORA.LOG4' THEN
+                EXIT; --found caller, exit loop
+            END IF;    
+
           END IF;
        END LOOP;
+       
+       pLineno := vTokens(2);
+       
+       -- util to parse name string returned
+       dbms_utility.name_tokenize(vModule, pOwner, pModule_name, vProcedure_name, vDBLink, vNextPos );
+       
     END get_calling_module;
 
 
@@ -137,10 +138,10 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     
     -- TODOs
     -- get session info
-    -- build xml
+    -- build xml message
     -- maybe this should return an xmltype??
     
-    -- for testing of gloabals package
+    -- for testing of gloabals package, should drop variable assignment
     vClient_IP := log4_globals.get_client_ip;
     
     RETURN pMsg;
