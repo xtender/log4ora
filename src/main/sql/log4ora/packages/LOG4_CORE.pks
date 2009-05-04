@@ -21,10 +21,6 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4_core AS
 
   /**
   *  Procedure to get the calling module. Uses DBMS_UTILITY.format_call_stack.
-  * 
-  *  NOTE: This assumes the calling module is the 3rd in the call stack.  
-  *        The first two positions of the call stack should be log4ora. 
-  *        Use of an additional wrapper procedure could break this logic.
   */
   PROCEDURE get_calling_module (pOwner         OUT VARCHAR2,
                                 pModule_name   OUT VARCHAR2,
