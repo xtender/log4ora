@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE LOG4ORA.log4_pruge AS
+create or replace  FUNCTION log4ora.get_log_level(pOwner IN VARCHAR2, pModule_name IN VARCHAR2) 
 /************************************************************************
     Log4ora - Logging package for Oracle 
     Copyright (C) 2009  John Thompson
@@ -17,9 +17,21 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4_pruge AS
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ************************************************************************/
--- TO DO create purge package for log table
-    FUNCTION stubb RETURN varchar2;
-
-
-END log4_purge;
-/
+    RETURN log_level%rowtype
+    RESULT_CACHE RELIES_ON (LOG_LEVEL) -- result cache not supported for 
+                                       -- for functions within packages
+  IS
+    rLog_level log_level%rowtype;
+  BEGIN
+    SELECT * INTO rLog_Level 
+    FROM log_level
+    WHERE owner = pOwner
+      AND object = pModule_name;
+  
+    RETURN rLog_level;
+  EXCEPTION 
+    WHEN no_data_found THEN
+        RETURN rLog_level;
+    WHEN others THEN 
+        raise;      
+  END get_log_level;

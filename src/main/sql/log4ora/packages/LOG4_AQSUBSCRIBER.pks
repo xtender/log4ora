@@ -18,11 +18,13 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4_aqsubscriber AS
 
 ************************************************************************/
 
--- TO DO
- -- package stub for aq subscriber.  This guy will read from queue
- -- and insert into log table
-
-    FUNCTION stubb RETURN varchar2;
+PROCEDURE callback_procedure(
+                   context  RAW,
+                   reginfo  SYS.AQ$_REG_INFO,
+                   descr    SYS.AQ$_DESCRIPTOR,
+                   payload  RAW,
+                   payloadl NUMBER
+                   );
 
 
 END log4_aqsubscriber;

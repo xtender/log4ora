@@ -18,11 +18,20 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
 
 ************************************************************************/
 
-
+-- DECLARE CONSTANTS
+    cDBMS_OUTPUT CONSTANT VARCHAR2(11) := 'DBMS_OUTPUT';
+    cAQ CONSTANT VARCHAR2(2) := 'AQ'; 
+    cTRACE CONSTANT VARCHAR2(5) := 'TRACE';
+    cDEBUG CONSTANT VARCHAR2(5) := 'DEBUG';
+    cINFO CONSTANT VARCHAR2(4) := 'INFO';
+    cWARN CONSTANT VARCHAR2(4) := 'WARN';
+    cERROR CONSTANT VARCHAR2(5) := 'ERROR';
+    cFATAL CONSTANT VARCHAR2(5) := 'FATAL';
+        
     --  roughly based on an 'ask tom' utility... 
     PROCEDURE get_calling_module (pOwner      OUT VARCHAR2,
-                             pModule_name       OUT VARCHAR2,
-                             pLineno     OUT NUMBER)
+                                  pModule_name       OUT VARCHAR2,
+                                  pLineno     OUT NUMBER)
     IS
        vCall_stack    VARCHAR2(2000) DEFAULT DBMS_UTILITY.format_call_stack ;
        n             NUMBER;
@@ -113,27 +122,78 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     END Tokenizer;
 
 
-
   /**
   *  Function to determine if log level is enabled for module
   *
   */
-  FUNCTION is_log_level_enabled(pOwner IN VARCHAR2, pModule_name IN VARCHAR2, pLevel IN VARCHAR2) RETURN boolean IS
-  BEGIN
+  FUNCTION is_log_level_enabled(pOwner IN VARCHAR2, pModule_name IN VARCHAR2, pLevel IN VARCHAR2,
+    pLog_type IN VARCHAR2) RETURN boolean
+  IS
+    
+    rLog_level log_level%rowtype;
+    vLog_level CHAR(1);
+    vReturn BOOLEAN := FALSE;
   
+  BEGIN    
     -- look up log level 
-    RETURN TRUE;
+    rLog_level := get_log_level(pOwner, pModule_name);
+    
+    -- if null result look up default log level 
+    IF rLog_level.log_level_id IS NULL THEN         
+        rLog_level := get_log_level('DEFAULT', 'DEFAULT');        
+    END IF;
+    
+    IF rLog_level.log_level_id IS NULL THEN
+        raise_application_error(-20001, 'Log Level not defined');
+    END IF;
+    
+    -- get log level value from record
+    CASE WHEN pLevel = cTRACE THEN vLog_level := rLog_level.trace;
+         WHEN pLevel = cDEBUG THEN vLog_level := rLog_level.debug;
+         WHEN pLevel = cINFO  THEN vLog_level := rLog_level.info;
+         WHEN pLevel = cWARN  THEN vLog_level := rLog_level.warn;
+         WHEN pLevel = cERROR THEN vLog_level := rLog_level.error;
+         WHEN pLevel = cFATAL THEN vLog_level := rLog_level.fatal;
+         ELSE raise_application_error(-20002, 'Invalid Log Level');     
+    END CASE;
+    
+    -- determine if logging is enabled for log type
+    IF pLog_type = cDBMS_OUTPUT THEN
+        CASE WHEN vLog_level = '0' THEN vReturn := FALSE;
+             WHEN vLog_level = '1' THEN vReturn := TRUE; 
+             WHEN vLog_level = '2' THEN vReturn := FALSE;
+             WHEN vLog_level = '3' THEN vReturn := TRUE;
+             ELSE raise_application_error(-20003, 
+                                           'Invalid Log Level Defined in Table');
+        END CASE;     
+    ELSIF pLog_type = cAQ THEN
+        CASE WHEN vLog_level = '0' THEN vReturn := FALSE;
+             WHEN vLog_level = '1' THEN vReturn := FALSE; 
+             WHEN vLog_level = '2' THEN vReturn := TRUE;
+             WHEN vLog_level = '3' THEN vReturn := TRUE;
+             ELSE raise_application_error(-20003, 
+                                           'Invalid Log Level Defined in Table');
+        END CASE;     
+    ELSE
+        raise_application_error(-20004, 'Invalid Log Type passed for pLog_type:' 
+                                          || pLog_type);
+    END IF;    
+    
+    RETURN vReturn;
   END is_log_level_enabled;  
   
+
 
   /**
   *  This function gathers session information, and builds the XML message
   *  which will be placed on the queue.
   *
   */
-  FUNCTION build_log_message (pLevel IN VARCHAR2, pMsg IN VARCHAR2) RETURN VARCHAR2 IS
+  FUNCTION build_log_message (pLevel IN VARCHAR2, pMsg IN VARCHAR2) RETURN XMLTYPE IS
   
    vClient_IP VARCHAR(20);
+   vXML_Message XMLTYPE;
+   
   BEGIN 
     
     -- TODOs
@@ -144,7 +204,10 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     -- for testing of gloabals package, should drop variable assignment
     vClient_IP := log4_globals.get_client_ip;
     
-    RETURN pMsg;
+    -- stub message for testing and development
+    vXML_Message := XMLTYPE('<MESSAGE>' || pMsg || '</MESSAGE>');
+    
+    RETURN vXML_Message;
   END build_log_message;  
 
 
@@ -152,11 +215,23 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
   * Procedure to insert log message to AQ Queue.
   *
   */ 
-  PROCEDURE queue_message(pLevel IN VARCHAR2, pMessage IN VARCHAR2) IS
+  PROCEDURE queue_message(pLevel IN VARCHAR2, pXML_Message IN XMLTYPE) IS
+     vEnqueue_options    dbms_aq.enqueue_options_t;
+     vMessage_properties dbms_aq.message_properties_t;
+     vMessage            sys.aq$_jms_text_message;
+     vMsgid              raw(16);
   BEGIN
-  
-    -- insert into AQ here
-    null;
+    
+    vMessage := sys.aq$_jms_text_message.construct;
+    vMessage.set_text(pXML_Message.getClobVal());
+    
+    dbms_aq.enqueue ( queue_name         => 'log4ora.log_queue',
+                        enqueue_options    => vEnqueue_options,
+                        message_properties => vMessage_properties,
+                        payload            => vMessage,
+                        msgid              => vMsgid
+                        );
+    -- TO DO - add exception handling 
   END queue_message;
   
 
@@ -167,7 +242,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
   PROCEDURE fatal(pMsg IN VARCHAR2) IS
   
   BEGIN
-    null;
+   log_message(cFATAL, pMsg);
   END fatal;
 
 
@@ -178,7 +253,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
   PROCEDURE error(pMsg IN VARCHAR2) IS
   
   BEGIN
-    null;
+    log_message(cERROR, pMsg);
   END error;
   
   
@@ -190,7 +265,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
   PROCEDURE warn(pMsg IN VARCHAR2) IS
   
   BEGIN
-    null;
+    log_message(cWARN, pMsg);
   END warn;
   
   
@@ -201,7 +276,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
   PROCEDURE info(pMsg IN VARCHAR2) IS
   
   BEGIN
-    null;
+    log_message(cINFO, pMsg);
   END info;
 
 
@@ -212,7 +287,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
   PROCEDURE debug(pMsg IN VARCHAR2) IS
   
   BEGIN
-    log_message('DEBUG', pMsg);
+    log_message(cDEBUG, pMsg);
   END debug;
 
 
@@ -224,7 +299,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
   PROCEDURE trace(pMsg IN VARCHAR2) IS
   
   BEGIN
-    null;
+    log_message(cTRACE, pMsg);
   END trace;
 
 
@@ -242,8 +317,13 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     
     get_calling_module(vOwner, vModule, vLineNo);
 
+    IF is_log_level_enabled(vOwner, vModule, pLevel, cDBMS_OUTPUT) THEN        
+        dbms_output.put_line( to_char(sysdate, 'mm/dd/yyyy hh:mi:ss AM') 
+                                 || '| ' || pLevel ||  ' | ' 
+                                 || pMsg);
+    END IF;
     
-    IF is_log_level_enabled(vOwner, vModule, pLevel) THEN        
+    IF is_log_level_enabled(vOwner, vModule, pLevel, cAQ) THEN        
         queue_message(pLevel, build_log_message(pLevel, pMsg));
     END IF;
     
