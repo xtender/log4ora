@@ -19,13 +19,35 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_aqsubscriber AS
 ************************************************************************/
 
 
+PROCEDURE callback_procedure(
+                   context  RAW,
+                   reginfo  SYS.AQ$_REG_INFO,
+                   descr    SYS.AQ$_DESCRIPTOR,
+                   payload  RAW,
+                   payloadl NUMBER
+                   ) AS
+  
+     vDequeue_options    DBMS_AQ.DEQUEUE_OPTIONS_T;
+     vMessage_properties DBMS_AQ.MESSAGE_PROPERTIES_T;
+     vMessageid     RAW(16);
+     VPayload            sys.aq$_jms_text_message;
+  
+  BEGIN
+  
+     vDequeue_options.msgid := descr.msg_id;
+     vDequeue_options.consumer_name := descr.consumer_name;
+  
+     DBMS_AQ.DEQUEUE(
+            queue_name         => descr.queue_name,
+            dequeue_options    => vDequeue_options,
+            message_properties => vMessage_properties,
+            payload            => vPayload,
+            msgid              => vMessageid
+            );
+    
+     -- TODO - do something with message.... 
 
-FUNCTION stubb RETURN varchar2 IS
-BEGIN
- 
-   
-   RETURN 'foo';
- 
-END;
+  END;
+
 
 END log4_aqsubscriber;
