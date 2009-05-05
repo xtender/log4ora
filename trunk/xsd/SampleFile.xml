@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<!-- Created with Liquid XML Studio - 30 Day Trial Edition 7.1.1.1206 (http://www.liquid-technologies.com) -->
+<log_message xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="C:\log4ora\trunk\xsd\logmessage.xsd">
+  <session_info>
+    <client_ip>string</client_ip>
+    <session_id>string</session_id>
+    <os_user>string</os_user>
+    <host>string</host>
+    <client_info>string</client_info>
+    <session_user>string</session_user>
+  </session_info>
+  <system_info>
+    <scn>string</scn>
+    <timestamp>string</timestamp>
+    <instance>string</instance>
+    <db_name>string</db_name>
+  </system_info>
+  <message_info>
+    <log_level>string</log_level>
+    <log_message>string</log_message>
+  </message_info>
+  <exception_info>
+    <ora_err_number>string</ora_err_number>
+    <ora_err_message>string</ora_err_message>
+    <ora_call_stack>string</ora_call_stack>
+  </exception_info>
+</log_message>
