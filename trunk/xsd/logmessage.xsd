@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <!--Created with Liquid XML Studio - 30 Day Trial Edition 7.1.1.1206 (http://www.liquid-technologies.com)-->
-<xs:schema elementFormDefault="qualified" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+<xs:schema xmlns="http://log4ora.googlecode.com/svn/trunk/xsd/logmessage.xsd" elementFormDefault="qualified" targetNamespace="http://log4ora.googlecode.com/svn/trunk/xsd/logmessage.xsd" version="1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <xs:element name="log_message" type="log_message_type" />
   <xs:complexType name="session_info_type">
     <xs:sequence>
@@ -16,7 +16,7 @@
   <xs:complexType name="system_info_type">
     <xs:sequence>
       <xs:element minOccurs="1" maxOccurs="1" name="scn" type="xs:string" />
-      <xs:element minOccurs="1" maxOccurs="1" name="timestamp" type="xs:string" />
+      <xs:element minOccurs="1" maxOccurs="1" name="timestamp" type="xs:dateTime" />
       <xs:element minOccurs="1" maxOccurs="1" name="instance" type="xs:string" />
       <xs:element minOccurs="1" maxOccurs="1" name="db_name" type="xs:string" />
     </xs:sequence>
