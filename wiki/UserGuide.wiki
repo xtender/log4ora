@@ -12,7 +12,13 @@ New and advanced features in Oracle 11g are utilized to make !Log4Ora light weig
 
 = Usage = 
 == Log Levels ==
- describe log levels here...
+||*Level*||*Description*||
+||Fatal|| Severe errors that cause termination.||
+||Error|| Other runtime errors or unexpected conditions.||
+||Warn || Runtime situations that are undesirable or unexpected, but not necessarily "wrong", such as the use of a deprecated API, or potentially incorrect of an API. ||
+||Info||Informational events in the system, such as the start and end of a long running batch job. ||
+|| Debug || Detailed information messages for debugging purposes. ||
+|| Trace || Most detailed level of logging. Log parameter values, etc. ||
 
 
 == Logging Messages ==
