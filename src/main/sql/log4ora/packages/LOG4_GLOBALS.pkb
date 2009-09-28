@@ -28,8 +28,9 @@ gOS_user VARCHAR(200);
 gHost  VARCHAR2(100);
 gClient_info VARCHAR2(100);
 gSession_user VARCHAR2(100);
-
-
+gInstance  VARCHAR2(100);
+gInstance_name VARCHAR2(100);
+gDB_NAME  VARCHAR2(100);
 
 
 FUNCTION get_client_ip RETURN VARCHAR2 IS
@@ -102,12 +103,44 @@ BEGIN
 END get_session_user;
 
 
-/*client_ip varchar2(20),
-session_id VARCHAR2(30),
-os_user VARCHAR2(60),
-host VARCHAR(100),
-client_info VARCHAR(100),
-session_user VARCHAR(100)
+
+FUNCTION get_instance RETURN VARCHAR2 IS
+BEGIN
+ 
+   IF gInstance IS NULL THEN
+        gInstance := SYS_CONTEXT('USERENV', 'INSTANCE');
+   END IF;
+   
+   RETURN gInstance;
+END get_instance;
+
+
+FUNCTION get_instance_name RETURN VARCHAR2 IS
+BEGIN
+ 
+   IF gInstance_name IS NULL THEN
+        gInstance_name := SYS_CONTEXT('USERENV', 'INSTANCE_NAME');
+   END IF;
+   
+   RETURN gInstance_name;
+END get_instance_name;
+
+
+
+FUNCTION get_db_name RETURN VARCHAR2 IS
+BEGIN
+ 
+   IF gDB_Name IS NULL THEN
+        gDB_Name := SYS_CONTEXT('USERENV', 'DB_NAME');
+   END IF;
+   
+   RETURN gDB_Name;
+END get_db_name;
+
+/*
+instance VARCHAR2(30),
+instance_name VARCHAR2(60),
+db_name VARCHAR2(30)
 */
 
 END log4_globals;
