@@ -1,4 +1,4 @@
-CREATE OR REPLACE PACKAGE LOG4ORA.log4_globals AS
+CREATE OR REPLACE TYPE log4ora.log_message_type AS OBJECT 
 /************************************************************************
     Log4ora - Logging package for Oracle 
     Copyright (C) 2009  John Thompson
@@ -17,17 +17,10 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4_globals AS
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ************************************************************************/
-
-    FUNCTION get_client_ip RETURN VARCHAR2;
-    FUNCTION get_session_id RETURN VARCHAR2; 
-    FUNCTION get_os_user RETURN VARCHAR2; 
-    FUNCTION get_host RETURN VARCHAR2; 
-    FUNCTION get_client_info RETURN VARCHAR2; 
-    FUNCTION get_session_user RETURN VARCHAR2; 
-    FUNCTION get_instance RETURN VARCHAR2; 
-    FUNCTION get_instance_name RETURN VARCHAR2;
-    FUNCTION get_db_name RETURN VARCHAR2; 
-
-
-END log4_globals;
-/
+(
+    
+    session_info session_info_type,
+    system_info  system_info_type,
+    message_info message_info_type,
+    exception_info exception_info_type
+);

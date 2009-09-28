@@ -27,7 +27,76 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     cWARN CONSTANT VARCHAR2(4) := 'WARN';
     cERROR CONSTANT VARCHAR2(5) := 'ERROR';
     cFATAL CONSTANT VARCHAR2(5) := 'FATAL';
+ 
+
+-- return object with session data
+    FUNCTION get_session_info
+    RETURN session_info_type
+    IS
+    
+        vSession_info session_info_type;
+    
+    BEGIN
+    
+      
+        vSession_info := session_info_type( log4_globals.get_client_ip, 'sessionID', 
+                        'OS User', 'host name', 'client_info', 'session_user' );
+ 
+        RETURN vSession_info;
+    END;
+
+
+-- return object with system data
+    FUNCTION get_system_info
+    RETURN system_info_type
+    IS
+        vSystem_info system_info_type;
+    
+    BEGIN
         
+        vSystem_info := system_info_type( 'scn', 'timestamp..', 'instanceid', 'db_name');
+        
+        RETURN vSystem_info;
+    END;
+
+
+-- return object with log message data
+    FUNCTION get_message_info (pLevel IN VARCHAR2, pMsg IN VARCHAR2)
+    RETURN message_info_type
+    IS
+    BEGIN
+        RETURN  message_info_type (pLevel, pMsg); 
+        
+    END;
+
+
+-- return object with exception data
+    FUNCTION get_exception_info
+    RETURN exception_info_type
+    IS
+        vException_info exception_info_type;
+    BEGIN
+        
+        vException_info := exception_info_type ('err nbmr', 'error message here... ', 
+                            'call stack here... ');
+
+        RETURN vException_info;
+    END;
+
+
+-- build and return log message object
+    FUNCTION get_log_message (pSession_info IN session_info_type,
+                              pSystem_info  IN system_info_type,
+                              pMessage_info IN message_info_type,
+                              pException_info IN exception_info_type)
+    RETURN log_message_type
+    IS
+    BEGIN
+       
+        RETURN log_message_type (pSession_info, pSystem_info, pMessage_info, pException_info);
+    END ;                              
+
+       
     --  roughly based on an 'ask tom' utility... 
     PROCEDURE get_calling_module (pOwner      OUT VARCHAR2,
                                   pModule_name       OUT VARCHAR2,
@@ -192,6 +261,9 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
   FUNCTION build_log_message (pLevel IN VARCHAR2, pMsg IN VARCHAR2) RETURN XMLTYPE IS
   
    vClient_IP VARCHAR(20);
+   
+   vLog_Message log_message_type; 
+   
    vXML_Message XMLTYPE;
    
   BEGIN 
@@ -199,15 +271,27 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     -- TODOs
     -- get session info
     -- build xml message
-    -- maybe this should return an xmltype??
+    
     
     -- for testing of gloabals package, should drop variable assignment
-    vClient_IP := log4_globals.get_client_ip;
+ 
+    
+    
     
     -- stub message for testing and development
-    vXML_Message := XMLTYPE('<MESSAGE>' || pMsg || '</MESSAGE>');
+    --vXML_Message := XMLTYPE('<MESSAGE>' || pMsg || '</MESSAGE>');
     
-    RETURN vXML_Message;
+    --RETURN vXML_Message;
+    
+    vLog_message := get_log_message (get_session_info, 
+                                     get_system_info,
+                                     get_message_info (pLevel, pMsg),
+                                     get_exception_info); 
+                                    
+    select sys_xmlgen(vLog_message) INTO vXML_message from dual;
+    
+       
+    RETURN vXML_Message;                               
   END build_log_message;  
 
 
@@ -312,6 +396,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     vOwner VARCHAR2(30);
     vModule VARCHAR2(30);
     vLineNo NUMBER;
+    vXMLMessage XMLTYPE;
     
   BEGIN
     
@@ -323,7 +408,10 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                                  || pMsg);
     END IF;
     
-    IF is_log_level_enabled(vOwner, vModule, pLevel, cAQ) THEN        
+    IF is_log_level_enabled(vOwner, vModule, pLevel, cAQ) THEN    
+        
+        vXMLMessage := build_log_message(pLevel, pMsg);
+        
         queue_message(pLevel, build_log_message(pLevel, pMsg));
     END IF;
     
