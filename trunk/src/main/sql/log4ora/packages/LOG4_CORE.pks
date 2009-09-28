@@ -38,7 +38,9 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4_core AS
   *  Function to determine if log level is enabled for module
   *
   */
-  FUNCTION is_log_level_enabled(pOwner IN VARCHAR2, pModule_name IN VARCHAR2, pLevel IN VARCHAR2, pLog_type IN VARCHAR2) RETURN boolean;
+  FUNCTION is_log_level_enabled(pOwner IN VARCHAR2, pModule_name IN VARCHAR2, 
+                                pLevel IN VARCHAR2, pLog_type IN VARCHAR2) 
+     RETURN boolean;
 
 
 
@@ -47,13 +49,15 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4_core AS
   *  which will be placed on the queue.
   *
   */
-  FUNCTION build_log_message (pLevel IN VARCHAR2, pMsg IN VARCHAR2) RETURN XMLTYPE;
+  FUNCTION build_log_message (pLevel IN VARCHAR2, pMsg IN VARCHAR2, 
+                              pModule VARCHAR2) 
+      RETURN XMLTYPE;
 
   /**
   * Procedure to insert log message to AQ Queue.
   *
   */ 
-  PROCEDURE queue_message (pLevel IN VARCHAR2, pXML_Message IN XMLTYPE);
+  PROCEDURE queue_message (pXML_Message IN XMLTYPE);
 
 
   /**
