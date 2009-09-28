@@ -36,11 +36,14 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     
         vSession_info session_info_type;
     
-    BEGIN
-    
+    BEGIN    
       
-        vSession_info := session_info_type( log4_globals.get_client_ip, 'sessionID', 
-                        'OS User', 'host name', 'client_info', 'session_user' );
+        vSession_info := session_info_type( log4_globals.get_client_ip, 
+                                            log4_globals.get_session_id, 
+                                            log4_globals.get_os_user, 
+                                            log4_globals.get_host, 
+                                            log4_globals.get_client_info, 
+                                            log4_globals.get_session_user ); 
  
         RETURN vSession_info;
     END;
@@ -52,9 +55,17 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     IS
         vSystem_info system_info_type;
     
+        vTimestamp VARCHAR2(40);
+         
     BEGIN
-        
-        vSystem_info := system_info_type( 'scn', 'timestamp..', 'instanceid', 'db_name');
+
+        -- convert current timestamp to string for XML file
+        vTimestamp := to_char(systimestamp, 'DD-MON-YYYY HH24:MI:SSxFF TZH:TZM');
+
+        vSystem_info := system_info_type( vTimestamp, 
+                                          log4_globals.get_instance,
+                                          log4_globals.get_instance_name,
+                                          log4_globals.get_db_name ); --'instanceid', 'instance name', 'db_name');
         
         RETURN vSystem_info;
     END;
@@ -77,8 +88,8 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
         vException_info exception_info_type;
     BEGIN
         
-        vException_info := exception_info_type ('err nbmr', 'error message here... ', 
-                            'call stack here... ');
+        vException_info := exception_info_type (SQLCODE, SQLERRM, 
+                            DBMS_UTILITY.format_call_stack);
 
         RETURN vException_info;
     END;
@@ -102,7 +113,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                                   pModule_name       OUT VARCHAR2,
                                   pLineno     OUT NUMBER)
     IS
-       vCall_stack    VARCHAR2(2000) DEFAULT DBMS_UTILITY.format_call_stack ;
+       vCall_stack    VARCHAR2(10000) DEFAULT DBMS_UTILITY.format_call_stack ;
        n             NUMBER;
        found_stack   BOOLEAN DEFAULT FALSE;
        line        varchar2(255);
@@ -288,7 +299,9 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                                      get_message_info (pLevel, pMsg),
                                      get_exception_info); 
                                     
-    select sys_xmlgen(vLog_message) INTO vXML_message from dual;
+    select sys_xmlgen(vLog_message, 
+                XMLFormat.createformat('LOG_MESSAGE'))
+           INTO vXML_message from dual;
     
        
     RETURN vXML_Message;                               
