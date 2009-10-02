@@ -19,6 +19,34 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_aqsubscriber AS
 ************************************************************************/
 
 
+-- take message in, parse XML, then parse to ORA object type
+PROCEDURE parse_message_to_object (pMessage IN VARCHAR, 
+                                   pLog_message OUT log4ora.log_message)
+IS
+
+vXML_Message XMLTYPE;
+
+BEGIN
+
+    vXML_Message := XMLTYPE(pMessage);
+      
+    vXML_Message.toObject(pLog_message);
+      
+END;
+
+
+
+-- save message data to log table
+PROCEDURE save_to_log (pLog_message IN log4ora.log_message)
+IS
+BEGIN
+
+    -- TO DO - create table, create insert
+    null;
+
+END save_to_log; 
+
+
 PROCEDURE callback_procedure(
                    context  RAW,
                    reginfo  SYS.AQ$_REG_INFO,
@@ -31,6 +59,10 @@ PROCEDURE callback_procedure(
      vMessage_properties DBMS_AQ.MESSAGE_PROPERTIES_T;
      vMessageid     RAW(16);
      VPayload            sys.aq$_jms_text_message;
+     
+     vMessage_text VARCHAR2(10000);
+     vLog_Message log4ora.log_message;
+     
   
   BEGIN
   
@@ -45,9 +77,26 @@ PROCEDURE callback_procedure(
             msgid              => vMessageid
             );
     
-     -- TODO - do something with message.... 
+      vPayload.get_text(vMessage_text);
+  
+  
+      -- TODO add exception handling for parse fail
+      BEGIN      
+        parse_message_to_object(vMessage_text, vLog_Message);
+      EXCEPTION
+        WHEN others THEN 
+            null;  -- do something here!!  Create error message and log
+      END;
+
+      
+     save_to_log(vLog_message);
+     
+     COMMIT;  --required because procedure will be called by Oracle
 
   END;
+  
+  
+                                     
 
 
 END log4_aqsubscriber;
