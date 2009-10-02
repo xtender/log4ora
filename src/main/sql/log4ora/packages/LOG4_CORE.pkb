@@ -111,10 +111,10 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                               pSystem_info  IN system_info_type,
                               pMessage_info IN message_info_type,
                               pException_info IN exception_info_type)
-    RETURN log_message_type
+    RETURN log4ora.log_message
     IS
     BEGIN       
-        RETURN log_message_type (pSession_info, pSystem_info, pMessage_info, pException_info);
+        RETURN log4ora.log_message (pSession_info, pSystem_info, pMessage_info, pException_info);
     END ;                              
 
        
@@ -280,23 +280,28 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                               pModule VARCHAR2) 
   RETURN XMLTYPE 
   IS
-  
-   vClient_IP VARCHAR(20);
-   
-   vLog_Message log_message_type; 
-   
-   vXML_Message XMLTYPE;
+        
+    vXML_Message XMLTYPE;
    
   BEGIN 
-        
-    vLog_message := get_log_message (get_session_info, 
+/*
+    Made change based on help from Louis
+    See blog post:  
+    http://it.toolbox.com/blogs/oracle-guide/minitip-13-converting-between-xml-and-oracle-objects-19085
+*/        
+--    vLog_message := get_log_message (get_session_info, 
+--                                     get_system_info,
+--                                     get_message_info (pLevel, pMsg, pModule),
+--                                     get_exception_info); 
+--                                    
+--    select sys_xmlgen(vLog_message, 
+--                XMLFormat.createformat('LOG_MESSAGE'))
+--           INTO vXML_message from dual;
+    
+    vXML_message := XMLType (get_log_message (get_session_info, 
                                      get_system_info,
                                      get_message_info (pLevel, pMsg, pModule),
-                                     get_exception_info); 
-                                    
-    select sys_xmlgen(vLog_message, 
-                XMLFormat.createformat('LOG_MESSAGE'))
-           INTO vXML_message from dual;
+                                     get_exception_info));  
     
        
     RETURN vXML_Message;                               
