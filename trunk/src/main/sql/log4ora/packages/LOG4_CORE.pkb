@@ -58,7 +58,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                                             log4_globals.get_session_user ); 
  
         RETURN vSession_info;
-    END;
+    END get_session_info;
 
 
 -- return object with system data
@@ -80,7 +80,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                                           log4_globals.get_db_name ); --'instanceid', 'instance name', 'db_name');
         
         RETURN vSystem_info;
-    END;
+    END get_system_info;
 
 
 -- return object with log message data
@@ -89,7 +89,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     IS
     BEGIN
         RETURN  message_info_type (pLevel, pMsg, pModule);         
-    END;
+    END get_message_info;
 
 
 -- return object with exception data
@@ -103,7 +103,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
                             DBMS_UTILITY.format_call_stack);
 
         RETURN vException_info;
-    END;
+    END get_exception_info;
 
 
 -- build and return log message object
@@ -115,7 +115,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     IS
     BEGIN       
         RETURN log4ora.log_message (pSession_info, pSystem_info, pMessage_info, pException_info);
-    END ;                              
+    END get_log_message;                              
 
        
     --  roughly based on an 'ask tom' utility... 
