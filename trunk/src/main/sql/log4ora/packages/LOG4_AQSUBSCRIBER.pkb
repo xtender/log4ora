@@ -2,48 +2,71 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_aqsubscriber AS
 /************************************************************************
     Log4ora - Logging package for Oracle 
     Copyright (C) 2009  John Thompson
-
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
-
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
-
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 ************************************************************************/
-
-
 -- take message in, parse XML, then parse to ORA object type
 PROCEDURE parse_message_to_object (pMessage IN VARCHAR, 
                                    pLog_message OUT log4ora.log_message)
 IS
-
 vXML_Message XMLTYPE;
-
 BEGIN
-
     vXML_Message := XMLTYPE(pMessage);
       
     vXML_Message.toObject(pLog_message);
       
 END;
-
-
-
 -- save message data to log table
 PROCEDURE save_to_log (pLog_message IN log4ora.log_message)
 IS
 BEGIN
 
-    -- TO DO - create table, create insert
-    null;
 
+    INSERT INTO log_table (
+        log_table_id,
+        log_level,
+        log_message,
+        module_name,
+        ora_err_number,
+        ora_err_message,
+        ora_call_stack,
+        client_ip,
+        session_id,
+        os_user,
+        host,
+        client_info,
+        session_user,
+        source_timestamp,
+        instance,
+        instance_name,
+        db_name  
+    ) VALUES (
+        log_table_seq.nextval,
+        pLog_message.message_info.log_level,
+        pLog_message.message_info.log_message,
+        pLog_message.message_info.module_name,
+        pLog_message.exception_info.ora_err_number,
+        pLog_message.exception_info.ora_err_message,
+        pLog_message.exception_info.ora_call_stack,
+        pLog_message.session_info.client_ip,
+        pLog_message.session_info.session_id,
+        pLog_message.session_info.os_user,
+        pLog_message.session_info.host,
+        pLog_message.session_info.client_info,
+        pLog_message.session_info.session_user,
+        to_timestamp_tz(pLog_message.system_info.timestamp , 'DD-MON-YYYY HH24:MI:SSxFF TZH:TZM'),
+        pLog_message.system_info.instance,
+        pLog_message.system_info.instance_name,
+        pLog_message.system_info.db_name        
+    ); 
 END save_to_log; 
 
 
@@ -87,16 +110,13 @@ PROCEDURE callback_procedure(
         WHEN others THEN 
             null;  -- do something here!!  Create error message and log
       END;
-
       
-     save_to_log(vLog_message);
+     save_to_log(vLog_message);  -- errors raised here will propagate to Oracle
+                           -- and be handled by AQ
      
      COMMIT;  --required because procedure will be called by Oracle
-
   END;
   
   
                                      
-
-
 END log4_aqsubscriber;
