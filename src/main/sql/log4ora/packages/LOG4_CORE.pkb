@@ -422,7 +422,8 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_core AS
     IF is_log_level_enabled(vOwner, vModule, pLevel, cDBMS_OUTPUT) THEN        
         dbms_output.put_line( to_char(sysdate, 'mm/dd/yyyy hh:mi:ss AM') 
                                  || '| ' || pLevel ||  ' | ' 
-                                 || pMsg || ' | ' || vModule);
+                                 || pMsg || ' | ' || vModule || ' | '
+                                 || SQLCODE || ' | ' || SQLERRM);
     END IF;
     
     -- if AQ message is enabled, then create AQ message

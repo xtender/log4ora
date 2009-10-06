@@ -18,10 +18,42 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4 AS
 
 ************************************************************************/
 
-  PROCEDURE debug(pMsg IN VARCHAR2) IS
-  BEGIN
-    log4_core.debug(pmsg);
-  END;  
+
+   PROCEDURE fatal (pMsg IN VARCHAR2)
+   IS
+   BEGIN
+      log4_core.fatal (pMsg);
+   END fatal;
+
+   PROCEDURE error (pMsg IN VARCHAR2)
+   IS
+   BEGIN
+      log4_core.error (pMsg);
+   END error;
+
+   PROCEDURE warn (pMsg IN VARCHAR2)
+   IS
+   BEGIN
+      log4_core.warn (pMsg);
+   END warn;
+
+   PROCEDURE info (pMsg IN VARCHAR2)
+   IS
+   BEGIN
+      log4_core.info (pMsg);
+   END info;
+
+   PROCEDURE debug (pMsg IN VARCHAR2)
+   IS
+   BEGIN
+      log4_core.debug (pMsg);
+   END debug;
+
+   PROCEDURE trace (pMsg IN VARCHAR2)
+   IS
+   BEGIN
+      log4_core.trace (pMsg);
+   END trace;
 
 END log4;
 /

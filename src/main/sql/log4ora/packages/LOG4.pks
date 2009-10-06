@@ -18,10 +18,17 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4 AS
 
 ************************************************************************/
 
-   -- TODO's
-     -- add procs for all message levels.
-
+    PROCEDURE fatal(pMsg IN VARCHAR2);
+    
+    PROCEDURE error(pMsg IN VARCHAR2);
+    
+    PROCEDURE warn(pMsg IN VARCHAR2);
+    
+    PROCEDURE info(pMsg IN VARCHAR2);
+    
     PROCEDURE debug(pMsg IN VARCHAR2);
+    
+    PROCEDURE trace(pMsg IN VARCHAR2);
 
 END log4;
 /

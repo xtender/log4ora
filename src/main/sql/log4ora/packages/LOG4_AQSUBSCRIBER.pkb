@@ -13,6 +13,7 @@ CREATE OR REPLACE PACKAGE BODY LOG4ORA.log4_aqsubscriber AS
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ************************************************************************/
+
 -- take message in, parse XML, then parse to ORA object type
 PROCEDURE parse_message_to_object (pMessage IN VARCHAR, 
                                    pLog_message OUT log4ora.log_message)
@@ -24,6 +25,8 @@ BEGIN
     vXML_Message.toObject(pLog_message);
       
 END;
+
+
 -- save message data to log table
 PROCEDURE save_to_log (pLog_message IN log4ora.log_message)
 IS
@@ -70,6 +73,7 @@ BEGIN
 END save_to_log; 
 
 
+-- called by Oracle AQ upon message arrival
 PROCEDURE callback_procedure(
                    context  RAW,
                    reginfo  SYS.AQ$_REG_INFO,
