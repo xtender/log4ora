@@ -1,4 +1,4 @@
-#summary FAQ - Frequently Asked Questions
+#summary Frequently Asked Questions
 #labels Featured
 
 ===Why yet another logging package?===
@@ -17,4 +17,3 @@ Log4ora was written to leverage JMS (via AQ) and log4J.  This creates a more ope
 Yes, there is always an associated overhead to logging.  This applies to any logging implementation.  Log4Ora will first check to see if the log level is enabled, and if so, then generate the log message and write it to AQ.  This allows you to have more verbose logging in development, and then just log critical events in production. 
 
 The generation of a log message is roughly the same cost as an insert into a table. Control of the your application process is returned once the message is on the AQ queue.  Your application process does not incur the cost of propagating the message to subscribers. This is handled by Oracle internally.  Naturally, the over all system incurs a cost, but the application thread does not. 
-
