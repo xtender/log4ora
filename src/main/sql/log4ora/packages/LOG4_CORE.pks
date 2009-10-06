@@ -18,6 +18,30 @@ CREATE OR REPLACE PACKAGE LOG4ORA.log4_core AS
 
 ************************************************************************/
 
+    -- return session info object
+    FUNCTION get_session_info
+        RETURN session_info_type;
+    
+    -- return object with system data
+    FUNCTION get_system_info
+        RETURN system_info_type;
+    
+    
+    -- return object with log message data
+    FUNCTION get_message_info (pLevel IN VARCHAR2, pMsg IN VARCHAR2, pModule IN VARCHAR2)
+        RETURN message_info_type;
+    
+    -- return object with exception data
+    FUNCTION get_exception_info
+        RETURN exception_info_type;
+
+    -- build and return log message object
+    FUNCTION get_log_message (pSession_info IN session_info_type,
+                              pSystem_info  IN system_info_type,
+                              pMessage_info IN message_info_type,
+                              pException_info IN exception_info_type)
+        RETURN log4ora.log_message;                    
+
 
   /**
   *  Procedure to get the calling module. Uses DBMS_UTILITY.format_call_stack.

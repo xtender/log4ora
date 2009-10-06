@@ -51,11 +51,11 @@ BEGIN
     ) VALUES (
         log_table_seq.nextval,
         pLog_message.message_info.log_level,
-        pLog_message.message_info.log_message,
+        substr(pLog_message.message_info.log_message, 1, 4000),
         pLog_message.message_info.module_name,
         pLog_message.exception_info.ora_err_number,
-        pLog_message.exception_info.ora_err_message,
-        pLog_message.exception_info.ora_call_stack,
+        substr(pLog_message.exception_info.ora_err_message, 1, 1000),
+        substr(pLog_message.exception_info.ora_call_stack, 1, 4000),
         pLog_message.session_info.client_ip,
         pLog_message.session_info.session_id,
         pLog_message.session_info.os_user,
@@ -102,19 +102,26 @@ PROCEDURE callback_procedure(
     
       vPayload.get_text(vMessage_text);
   
-  
-      -- TODO add exception handling for parse fail
       BEGIN      
         parse_message_to_object(vMessage_text, vLog_Message);
       EXCEPTION
-        WHEN others THEN 
-            null;  -- do something here!!  Create error message and log
+        WHEN others THEN           
+            -- create new message object with error info.
+            -- note this logs the message ID which can be used for research of error
+            vLog_Message := log4_core.get_log_message(
+                                 log4_core.get_session_info, 
+                                 log4_core.get_system_info,                                
+                                 log4_core.get_message_info ('ERROR', 
+                                    ( 'Error processing message received. Message ID: '
+                                        || vMessageId), 
+                                        'LOG4_AQSUBSCRIBER'),
+                                 log4_core.get_exception_info);  
       END;
       
-     save_to_log(vLog_message);  -- errors raised here will propagate to Oracle
-                           -- and be handled by AQ
+      save_to_log(vLog_message);  -- errors raised here will propagate to Oracle
+                                  -- and will be handled by AQ
      
-     COMMIT;  --required because procedure will be called by Oracle
+      COMMIT;  --required because procedure will be called by Oracle
   END;
   
   
