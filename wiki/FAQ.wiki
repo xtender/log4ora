@@ -19,7 +19,7 @@ Yes, there is always an associated overhead to logging.  This applies to any log
 The generation of a log message is roughly the same cost as an insert into a table. Control of the your application process is returned once the message is on the AQ queue.  Your application process does not incur the cost of propagating the message to subscribers. This is handled by Oracle internally.  Naturally, the over all system incurs a cost, but the application thread does not. 
 
 
-=== Is Log4Ora easy to use? ===
+=== Is Log4ora easy to use? ===
 Yes.  Below is sample code to create a debug message.
 
 {{{
