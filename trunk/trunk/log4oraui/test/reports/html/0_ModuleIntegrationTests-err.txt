@@ -1,0 +1,5 @@
+--Output from testSomething--
+--Output from testDefaultModule--
+--Output from testDefaultLogLevels--
+--Output from testLogMethod--
+
